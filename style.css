@@ -1482,3 +1482,233 @@ body.dark-theme .link-tile:hover .link-tile-title {
   line-height: 1.35;
   margin: 0;
 }
+
+/* ==========================================================================
+   RESPONSYWNOŚĆ (RWD) - WNUCZEK.AI (MOBILNE DLA SENIORA)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  /* 1. Nagłówek i status użytkownika */
+  .app-header {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    padding: 0.75rem 1rem !important;
+    align-items: center !important;
+  }
+
+  .header-controls {
+    width: 100% !important;
+    justify-content: center !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+  }
+
+  .accessibility-panel {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .btn-theme-toggle {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .user-status {
+    width: 100% !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+  }
+
+  .user-welcome-text {
+    display: none !important; /* Ukryj powitanie na małym ekranie */
+  }
+
+  .btn-logout {
+    padding: 0.4rem 1rem !important;
+    min-height: 40px !important;
+    font-size: 0.95rem !important;
+  }
+
+  /* 2. Menu nawigacyjne - poziomy pasek przewijania */
+  .sidebar-navigation {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 0.5rem 0.75rem !important;
+    border-bottom: 2px solid var(--bg-tertiary) !important;
+    border-right: none !important;
+    justify-content: flex-start !important;
+    gap: 0.6rem !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important; /* Firefox */
+    width: 100% !important;
+    margin-left: 0 !important;
+  }
+
+  .sidebar-navigation::-webkit-scrollbar {
+    display: none !important; /* Chrome/Safari */
+  }
+
+  .nav-item {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    padding: 0.6rem 1rem !important;
+    font-size: 1rem !important;
+    min-height: auto !important;
+    gap: 0.4rem !important;
+    transform: none !important;
+    border-left: none !important;
+    border-bottom: 4px solid transparent !important;
+    border-radius: var(--radius-sm) !important;
+  }
+
+  .nav-item:hover {
+    transform: none !important;
+  }
+
+  .nav-item.active {
+    border-bottom: 4px solid var(--primary) !important;
+    background: var(--primary-light) !important;
+    border-radius: var(--radius-sm) !important;
+  }
+
+  .nav-icon {
+    font-size: 1.3rem !important;
+  }
+
+  /* 3. Marginesy, dopełnienia i kontenery główne */
+  .content-area {
+    padding: 1rem !important;
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .view-card {
+    padding: 1.25rem !important;
+    border-radius: var(--radius-md) !important;
+  }
+
+  .view-title {
+    font-size: 1.6rem !important;
+    gap: 0.5rem !important;
+    padding-bottom: 0.6rem !important;
+  }
+
+  .view-subtitle {
+    font-size: 1rem !important;
+    margin-bottom: 1.5rem !important;
+  }
+
+  /* 4. Konwersja siatek (grid) do 1 kolumny */
+  .profile-grid,
+  .schedule-grid,
+  .diet-grid,
+  .card-creator-layout,
+  .links-grid,
+  .form-row {
+    grid-template-columns: 1fr !important;
+    gap: 1.25rem !important;
+  }
+
+  .form-row {
+    gap: 0.75rem !important;
+  }
+
+  /* Kafelki asystenta diety i niezbędnika */
+  .diet-quick-recipes {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  .links-grid {
+    gap: 1rem !important;
+  }
+
+  .link-tile {
+    padding: 1.25rem !important;
+    min-height: auto !important;
+    gap: 1rem !important;
+  }
+
+  .link-tile-icon {
+    font-size: 2rem !important;
+    min-width: 50px !important;
+    height: 50px !important;
+  }
+
+  .link-tile-title {
+    font-size: 1.15rem !important;
+  }
+
+  /* 5. Modale (przypomnienia o lekach i przepisach) */
+  .alert-modal {
+    padding: 1.5rem !important;
+    width: 95% !important;
+  }
+
+  .alert-icon {
+    width: 70px !important;
+    height: 70px !important;
+    font-size: 2.5rem !important;
+    margin-bottom: 1.25rem !important;
+  }
+
+  .alert-title {
+    font-size: 1.8rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .alert-message {
+    font-size: 1.2rem !important;
+    margin-bottom: 1.75rem !important;
+  }
+
+  /* 6. Ekran startowy logowania i rejestracji */
+  .auth-container {
+    padding: 1.5rem 1.25rem !important;
+    margin: 1.5rem auto !important;
+  }
+
+  .auth-header h1 {
+    font-size: 2rem !important;
+  }
+
+  .auth-tabs {
+    gap: 0.75rem !important;
+    margin-bottom: 1.5rem !important;
+  }
+
+  .auth-tab {
+    font-size: 1.1rem !important;
+    padding: 0.7rem !important;
+  }
+
+  /* 7. BMI */
+  .bmi-value-display {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+  }
+
+  .bmi-number {
+    font-size: 3rem !important;
+  }
+
+  /* 8. Sekcja testowania SOS */
+  .section-box {
+    padding: 1.5rem !important;
+  }
+
+  /* 9. Podgląd kartek okolicznościowych */
+  .card-preview-area {
+    padding: 1.5rem !important;
+  }
+
+  /* 10. Przyciski */
+  .btn-submit {
+    padding: 1rem !important;
+    font-size: 1.15rem !important;
+  }
+}
