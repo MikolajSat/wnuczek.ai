@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wnuczek.AI – Twój Wirtualny Pomocnik i Opiekun</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- SYSTEM POWIADOMIEŃ MEDYCZNYCH (ALERT MODAL) -->
+  <div id="medicalAlertOverlay" class="alert-overlay hidden" aria-modal="true" role="dialog">
+    <div class="alert-modal">
+      <div class="alert-icon">🔔</div>
+      <h2 class="alert-title">Przypomnienie o leku!</h2>
+      <p id="alertMessage" class="alert-message">Czas przyjąć lek: Aspiryna (1 tabletka).</p>
+      <button id="btnAlertAck" class="btn-alert-ack">Zatwierdzam przyjęcie leku</button>
+    </div>
+  </div>
+
+  <!-- DYNAMICZNY PODGLĄD PRZEPISU (MODAL) -->
+  <div id="recipeModal" class="alert-overlay hidden" aria-modal="true" role="dialog">
+    <div class="alert-modal"
+      style="border-color: var(--primary); text-align: left; max-width: 700px; max-height: 85vh; display: flex; flex-direction: column; padding: 2.5rem; animation: none;">
+      <h2 id="recipeModalTitle"
+        style="color: var(--primary); font-size: 1.8rem; margin-bottom: 1rem; font-family: 'Outfit', sans-serif;">
+        Przepis</h2>
+      <div id="recipeModalContent"
+        style="flex: 1; overflow-y: auto; margin-bottom: 1.5rem; padding-right: 0.5rem; font-size: 1.15rem; line-height: 1.6; color: var(--text-main); white-space: pre-line;">
+        Wnuczek przygotowuje przepis dla Ciebie...
+      </div>
+      <button id="btnRecipeModalClose" class="btn-submit"
+        style="margin-top: 0; background: linear-gradient(135deg, var(--primary), var(--primary-hover)); padding: 1rem; font-size: 1.25rem;">Zamknij</button>
+    </div>
+  </div>
+
+  <!-- KONTENER NA TOASTY -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- EKRAN STARTOWY / LOGOWANIA -->
+  <div id="authScreen" class="auth-container">
+    <div class="auth-header">
+      <h1>Wnuczek.AI</h1>
+      <p style="color: var(--text-muted); font-size: 1.15rem; margin-top: 0.5rem;">Ciepły i pomocny asystent stworzony
+        specjalnie dla Ciebie</p>
+    </div>
+
+    <div class="auth-tabs">
+      <button id="tabLogin" class="auth-tab active">Logowanie</button>
+      <button id="tabRegister" class="auth-tab">Rejestracja dla Nowego Użytkownika</button>
+    </div>
+
+    <!-- Formularz Logowania -->
+    <form id="formLogin" onsubmit="event.preventDefault();">
+      <div class="form-group">
+        <label for="loginEmail">Twój adres e-mail</label>
+        <input type="email" id="loginEmail" placeholder="np. jan.kowalski@email.pl" required>
+      </div>
+      <div class="form-group">
+        <label for="loginPassword">Hasło</label>
+        <input type="password" id="loginPassword" placeholder="Wpisz swoje hasło" required>
+      </div>
+      <button type="submit" class="btn-submit">Zaloguj się</button>
+    </form>
+
+    <!-- Formularz Rejestracji -->
+    <form id="formRegister" class="hidden" onsubmit="event.preventDefault();">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="regName">Imię i Nazwisko</label>
+          <input type="text" id="regName" placeholder="np. Jan Kowalski" required>
+        </div>
+        <div class="form-group">
+          <label for="regAge">Wiek (w latach)</label>
+          <input type="number" id="regAge" placeholder="np. 72" min="1" max="120" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="regEmail">Adres e-mail</label>
+          <input type="email" id="regEmail" placeholder="np. jan.kowalski@email.pl" required>
+        </div>
+        <div class="form-group">
+          <label for="regPassword">Hasło</label>
+          <input type="password" id="regPassword" placeholder="Stwórz bezpieczne hasło" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="regWeight">Waga (kg)</label>
+          <input type="number" id="regWeight" placeholder="np. 75" min="10" max="250" required>
+        </div>
+        <div class="form-group">
+          <label for="regHeight">Wzrost (cm)</label>
+          <input type="number" id="regHeight" placeholder="np. 172" min="100" max="230" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="regEmergency">Numer do bliskiej osoby (telefon alarmowy)</label>
+        <input type="tel" id="regEmergency" placeholder="np. +48 123 456 789" required>
+        <small class="form-help">Wnuczek.AI podpowie ten numer w nagłych sytuacjach.</small>
+      </div>
+      <button type="submit" class="btn-submit">Stwórz nowe konto</button>
+    </form>
+  </div>
+
+  <!-- APLIKACJA PO ZALOGOWANIU -->
+  <div id="appContainer" class="hidden" style="display: flex; flex-direction: column; min-height: 100vh;">
+
+    <!-- NAGŁÓWEK GŁÓWNY -->
+    <header class="app-header">
+      <div class="logo-container">
+        <div class="logo-icon">👴</div>
+        <span class="logo-text">Wnuczek.AI</span>
+      </div>
+
+      <div class="header-controls">
+        <!-- Panel ułatwień dostępu (A11y) -->
+        <div class="accessibility-panel" aria-label="Narzędzia ułatwień dostępu">
+          <button id="btnA11yDown" class="btn-a11y" aria-label="Zmniejsz czcionkę">A-</button>
+          <span id="fontSizeIndicator" class="font-size-indicator" aria-live="polite">18px</span>
+          <button id="btnA11yUp" class="btn-a11y" aria-label="Zwiększ czcionkę">A+</button>
+        </div>
+
+        <!-- Przełącznik motywu (Dzień/Noc) -->
+        <button id="btnThemeToggle" class="btn-theme-toggle">
+          <span id="themeToggleIcon">🌙</span> <span id="themeToggleText">Spokojna Noc</span>
+        </button>
+
+        <!-- Status sesji i wylogowanie -->
+        <div class="user-status">
+          <img id="userAvatar" src="assets/avatar.png" alt="Miniaturka profilu" class="user-avatar">
+          <span id="userWelcomeText" class="user-welcome-text">Witaj, Janie!</span>
+          <button id="btnLogout" class="btn-logout">Wyloguj</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- UKŁAD SPA GŁÓWNY -->
+    <div class="main-layout">
+
+      <!-- BOCZNA NAWIGACJA -->
+      <aside class="sidebar-navigation" role="navigation" aria-label="Menu główne">
+        <button class="nav-item active" data-view="profile">
+          <span class="nav-icon">👤</span> Profil i Zdrowie
+        </button>
+        <button class="nav-item" data-view="schedule">
+          <span class="nav-icon">💊</span> Leki i Terminarz
+        </button>
+        <button class="nav-item" data-view="chat">
+          <span class="nav-icon">💬</span> Rozmowa z Wnuczkiem
+        </button>
+        <button class="nav-item" data-view="cards">
+          <span class="nav-icon">✉️</span> Kreator Kartek
+        </button>
+        <button class="nav-item" data-view="diet">
+          <span class="nav-icon">🍎</span> Asystent Diety
+        </button>
+        <button class="nav-item" data-view="games">
+          <span class="nav-icon">🧠</span> Trening Pamięci
+        </button>
+        <button class="nav-item" data-view="links">
+          <span class="nav-icon">🔗</span> Niezbędnik Seniora
+        </button>
+        <button class="nav-item" data-view="settings">
+          <span class="nav-icon">🚨</span> SOS i Alarmy
+        </button>
+      </aside>
+
+      <!-- GŁÓWNA TREŚĆ -->
+      <main class="content-area">
+
+        <!-- WIDOK: PROFIL I ZDROWIE -->
+        <section id="viewProfile" class="view-card">
+          <h2 class="view-title">👤 Mój Profil i Stan Zdrowia</h2>
+          <p class="view-subtitle">Twoje podstawowe dane medyczne oraz wskaźnik masy ciała (BMI)</p>
+
+          <div class="profile-grid">
+            <!-- Box podsumowania -->
+            <div class="profile-summary-box">
+              <img src="assets/avatar.png" alt="Twoje zdjęcie profilowe" class="user-avatar-large" id="profileAvatar">
+              <h3 id="profileName">Jan Kowalski</h3>
+              <p style="color: var(--text-muted); font-weight: 600;" id="profileEmail">jan.kowalski@email.pl</p>
+
+              <div class="profile-details-list">
+                <div class="profile-detail-item">
+                  <strong>Wiek:</strong>
+                  <span id="profileAge">72 lata</span>
+                </div>
+                <div class="profile-detail-item">
+                  <strong>Wzrost:</strong>
+                  <span id="profileHeight">172 cm</span>
+                </div>
+                <div class="profile-detail-item">
+                  <strong>Waga:</strong>
+                  <span id="profileWeight">75 kg</span>
+                </div>
+                <div class="profile-detail-item">
+                  <strong>Wybrana dieta:</strong>
+                  <span id="profileDiet">Ogólna dieta seniora</span>
+                </div>
+                <div class="profile-detail-item" style="border-bottom: none; color: var(--danger); font-weight: 800;">
+                  <strong>Kontakt alarmowy:</strong>
+                  <span id="profileEmergency">+48 123 456 789</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Panel BMI i wskazówki -->
+            <div>
+              <div class="bmi-card">
+                <h3>Wskaźnik Masy Ciała (BMI)</h3>
+                <p style="margin-bottom: 1.25rem; font-size: 1rem; color: var(--text-muted);">BMI to wskaźnik
+                  określający, czy Twoja waga jest odpowiednia dla Twojego wzrostu.</p>
+
+                <div class="bmi-value-display">
+                  <span id="bmiNumber" class="bmi-number">25.4</span>
+                  <span id="bmiBadge" class="bmi-badge" style="background-color: var(--warning);">Lekka nadwaga</span>
+                </div>
+
+                <!-- Pasek BMI -->
+                <div class="bmi-bar-container">
+                  <div id="bmiMarker" class="bmi-marker" style="left: 60%;"></div>
+                </div>
+
+                <div class="bmi-labels">
+                  <span>Niedowaga (&lt;18.5)</span>
+                  <span>W normie (18.5 - 24.9)</span>
+                  <span>Nadwaga (25.0 - 29.9)</span>
+                  <span>Otyłość (&gt;=30)</span>
+                </div>
+              </div>
+
+              <!-- Porada zdrowotna -->
+              <div id="healthTipsContainer" class="health-tips-container">
+                <h4>🟢 Wskazówka zdrowotna od Wnuczka</h4>
+                <p id="healthTipText">Twoja waga jest w normie! Staraj się utrzymać zbilansowaną dietę bogatą w warzywa,
+                  owoce i błonnik oraz spędzać codziennie przynajmniej 30 minut na świeżym powietrzu (np. na spacerze).
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- WIDOK: LEKI I TERMINARZ -->
+        <section id="viewSchedule" class="view-card hidden">
+          <h2 class="view-title">💊 Moje Leki i Terminarz</h2>
+          <p class="view-subtitle">Zaplanuj przyjmowanie leków oraz zapisz ważne wydarzenia i wizyty lekarskie</p>
+
+          <div class="schedule-grid">
+
+            <!-- SEKCJA: LEKI -->
+            <div class="section-box">
+              <h3><span>💊</span> Zaplanowane Leki</h3>
+              <form id="formAddMed" onsubmit="event.preventDefault();"
+                style="display: flex; flex-direction: column; gap: 1rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label for="medName" style="font-size: 1rem;">Nazwa leku</label>
+                  <input type="text" id="medName" placeholder="np. Aspiryna Cardio" required>
+                </div>
+                <div class="form-row" style="gap: 1rem; margin-bottom: 0;">
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label for="medDose" style="font-size: 1rem;">Dawka</label>
+                    <input type="text" id="medDose" placeholder="np. 1 tabletka" required>
+                  </div>
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label for="medTime" style="font-size: 1rem;">Godzina przyjęcia</label>
+                    <input type="time" id="medTime" required>
+                  </div>
+                </div>
+                <button type="submit" class="btn-submit"
+                  style="padding: 0.75rem 1rem; font-size: 1.1rem; margin-top: 0.5rem;">+ Dodaj lek</button>
+              </form>
+
+              <!-- Lista Leków -->
+              <div class="list-container" id="medsList">
+                <!-- Lek wpisywany dynamicznie -->
+                <div class="list-item">
+                  <div class="list-item-content">
+                    <h4>Aspiryna Cardio</h4>
+                    <p>Dawka: 1 tabletka | Codziennie o 08:00</p>
+                  </div>
+                  <button class="btn-delete-item" aria-label="Usuń lek">🗑️</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- SEKCJA: TERMINARZ / KALENDARZ -->
+            <div class="section-box">
+              <h3><span>📅</span> Ważne Wydarzenia</h3>
+              <form id="formAddEvent" onsubmit="event.preventDefault();"
+                style="display: flex; flex-direction: column; gap: 1rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label for="eventName" style="font-size: 1rem;">Nazwa wydarzenia / Wizyta</label>
+                  <input type="text" id="eventName" placeholder="np. Kontrola u kardiologa" required>
+                </div>
+                <div class="form-row" style="gap: 1rem; margin-bottom: 0;">
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label for="eventDate" style="font-size: 1rem;">Data</label>
+                    <input type="date" id="eventDate" required>
+                  </div>
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label for="eventTime" style="font-size: 1rem;">Godzina</label>
+                    <input type="time" id="eventTime" required>
+                  </div>
+                </div>
+                <button type="submit" class="btn-submit"
+                  style="padding: 0.75rem 1rem; font-size: 1.1rem; margin-top: 0.5rem;">+ Dodaj do terminarza</button>
+              </form>
+
+              <!-- Lista Wydarzeń -->
+              <div class="list-container" id="eventsList">
+                <!-- Wydarzenie wpisywane dynamicznie -->
+                <div class="list-item">
+                  <div class="list-item-content">
+                    <h4>Wizyta u Kardiologa</h4>
+                    <p>Data: 28.06.2026 r. o godz. 11:30</p>
+                  </div>
+                  <button class="btn-delete-item" aria-label="Usuń wydarzenie">🗑️</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- WIDOK: ROZMOWA Z WNUCZKIEM -->
+        <section id="viewChat" class="view-card hidden">
+          <h2 class="view-title">💬 Rozmowa z Wnuczkiem</h2>
+          <p class="view-subtitle">Twój wirtualny wnuczek chętnie z Tobą porozmawia, wysłucha Cię i doradzi w
+            codziennych sprawach</p>
+
+          <div class="chat-container">
+            <div class="chat-disclaimer">
+              ⚠️ Uwaga: Wnuczek.AI to sztuczna inteligencja i nie zastępuje profesjonalnej porady medycznej. W nagłych
+              wypadkach zawsze dzwoń pod numer 112!
+            </div>
+
+            <!-- Sugerowane pytania -->
+            <div class="chat-suggested-questions" id="chatSuggested">
+              <button class="suggested-btn" data-question="Opowiedz mi jakiś ciepły żart.">🎭 Opowiedz mi żart</button>
+              <button class="suggested-btn" data-question="Co powinienem zjeść dziś na lekki obiad?">🥗 Co zjeść na
+                obiad?</button>
+              <button class="suggested-btn"
+                data-question="Przypomnij mi, dlaczego regularne branie leków jest ważne.">💊 Dlaczego leki są
+                ważne?</button>
+              <button class="suggested-btn" data-question="Porozmawiajmy o pogodzie. Jaki jest piękny dzień!">☀️
+                Porozmawiajmy o pogodzie</button>
+            </div>
+
+            <!-- Historia wiadomości -->
+            <div class="chat-history" id="chatHistory">
+              <!-- Wiadomość powitalna AI -->
+              <div class="chat-message-row ai">
+                <img src="assets/avatar.png" alt="Wnuczek" class="chat-avatar">
+                <div class="chat-message ai">
+                  <div class="chat-message-bubble">Cześć! Cieszę się, że jesteś. Jak się dzisiaj czujesz? Chętnie o
+                    czymś pogadam, pomogę Ci z przelicznikiem kuchennym lub przypomnę o lekach. Co u Ciebie słychać?
+                  </div>
+                  <div class="chat-message-actions">
+                    <button class="btn-tts" aria-label="Przeczytaj na głos">🔊</button>
+                  </div>
+                  <span class="chat-message-meta">Wnuczek, przed chwilą</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Obszar wpisywania -->
+            <div class="chat-input-area">
+              <textarea id="chatInput" class="chat-input" placeholder="Wpisz tutaj swoją wiadomość do Wnuczka..."
+                aria-label="Wiadomość do Wnuczka"></textarea>
+              <button id="btnSendChat" class="btn-send" aria-label="Wyślij wiadomość">✉️</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- WIDOK: KREATOR KARTEK -->
+        <section id="viewCards" class="view-card hidden">
+          <h2 class="view-title">✉️ Kreator Kartek Okolicznościowych</h2>
+          <p class="view-subtitle">Stwórz piękną, spersonalizowaną kartkę z życzeniami dla swoich bliskich i pobierz ją
+            na komputer lub telefon</p>
+
+          <div class="card-creator-layout">
+            <!-- Formularz tworzenia -->
+            <div class="section-box" style="gap: 1.5rem;">
+              <h3>Konfiguracja Kartki</h3>
+
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="cardOccasion">Wybierz okazję</label>
+                <select id="cardOccasion">
+                  <option value="Wszystkiego najlepszego!">Urodziny / Imieniny</option>
+                  <option value="Wesołych Świąt!">Boże Narodzenie</option>
+                  <option value="Radosnego Alleluja!">Wielkanoc</option>
+                  <option value="Kochanym Dziadkom!">Dzień Babci / Dziadka</option>
+                  <option value="Z całego serca!">Inna okazja (Własna)</option>
+                </select>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="cardRecipient">Dla kogo (Imię odbiorcy)</label>
+                <input type="text" id="cardRecipient" placeholder="np. dla wnuczka Adasia, dla córki Anny"
+                  value="dla Bliskiej Osoby">
+              </div>
+
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="cardBackground">Wybierz tło graficzne</label>
+                <select id="cardBackground">
+                  <option value="flowers">Piękne Kwiaty (Klasyczna)</option>
+                  <option value="birthday">Tort Urodzinowy (Uroczysta)</option>
+                  <option value="christmas">Zimowy Krajobraz (Świąteczna)</option>
+                  <option value="easter">Wiosenne Pisanki (Wielkanocna)</option>
+                </select>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="cardText">Życzenia (Treść na kartce)</label>
+                <textarea id="cardText" rows="4"
+                  placeholder="Wpisz życzenia lub zostaw puste, aby wygenerować automatycznie..."></textarea>
+              </div>
+
+              <button id="btnGenerateCard" class="btn-submit" style="margin-top: 0.5rem;">
+                ✨ Wygeneruj kartkę
+              </button>
+            </div>
+
+            <!-- Podgląd kartki -->
+            <div class="card-preview-area">
+              <div id="cardContainer" class="card-container">
+                <!-- Loader -->
+                <div id="cardLoading" class="card-loading hidden">
+                  <div class="spinner"></div>
+                  <p style="font-weight: 800; color: var(--primary);">Tworzenie kartki...</p>
+                </div>
+
+                <div class="card-image-wrapper">
+                  <img id="cardImg" src="assets/card_flowers.png" alt="Tło kartki" class="card-img">
+                </div>
+
+                <div class="card-text-overlay">
+                  <h4 id="cardPreviewTitle" class="card-title-text">Wszystkiego najlepszego!</h4>
+                  <p style="font-size: 0.95rem; color: var(--text-muted); font-weight: 700; margin-bottom: 0.4rem;"
+                    id="cardPreviewRecipient">dla Bliskiej Osoby</p>
+                  <p id="cardPreviewBody" class="card-body-text">Wszystkiego, co najlepsze, zdrowia, pomyślności oraz
+                    niegasnącego uśmiechu na co dzień życzy Jan!</p>
+                </div>
+              </div>
+
+              <button id="btnDownloadCard" class="btn-download">
+                📥 Pobierz gotową kartkę (PNG)
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- WIDOK: ASYSTENT DIETY -->
+        <section id="viewDiet" class="view-card hidden">
+          <h2 class="view-title">🍎 Asystent Diety i Przelicznik Kuchenny</h2>
+          <p class="view-subtitle">Szybki przelicznik jednostek kuchennych, spersonalizowany jadłospis oraz przepisy ze
+            składników z lodówki</p>
+
+          <div class="diet-grid">
+            <!-- Lewa kolumna: Przelicznik kuchenny i Lodówka -->
+            <div>
+              <div class="converter-widget">
+                <h3>⚖️ Przelicznik Kuchenny</h3>
+                <p style="margin-bottom: 1.25rem; font-size: 0.95rem; color: var(--text-muted);">Często w przepisach
+                  miary są podawane w szklankach lub łyżkach. Przelicz je łatwo na gramy!</p>
+
+                <!-- Kafelki szybkiego wyboru składników -->
+                <div class="diet-quick-recipes">
+                  <button class="diet-quick-tile active" data-ingredient="flour">
+                    <span class="diet-quick-tile-icon">🌾</span>
+                    <span>Mąka</span>
+                  </button>
+                  <button class="diet-quick-tile" data-ingredient="sugar">
+                    <span class="diet-quick-tile-icon">🍬</span>
+                    <span>Cukier</span>
+                  </button>
+                  <button class="diet-quick-tile" data-ingredient="water">
+                    <span class="diet-quick-tile-icon">💧</span>
+                    <span>Woda/Mleko</span>
+                  </button>
+                  <button class="diet-quick-tile" data-ingredient="oil">
+                    <span class="diet-quick-tile-icon">🌻</span>
+                    <span>Olej</span>
+                  </button>
+                </div>
+
+                <div class="converter-row">
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label for="convertFromUnit" style="font-size: 1rem;">Zamień z</label>
+                    <select id="convertFromUnit">
+                      <option value="cups">Szklanka (250ml)</option>
+                      <option value="tbsp">Łyżka stołowa</option>
+                      <option value="tsp">Łyżeczka</option>
+                      <option value="grams">Gramy (g)</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label for="convertAmount" style="font-size: 1rem;">Ilość</label>
+                    <input type="number" id="convertAmount" value="1" min="0.1" step="0.1">
+                  </div>
+                </div>
+
+                <div class="converter-row">
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label for="convertToUnit" style="font-size: 1rem;">Zamień na</label>
+                    <select id="convertToUnit">
+                      <option value="grams">Gramy (g)</option>
+                      <option value="cups">Szklanka (250ml)</option>
+                      <option value="tbsp">Łyżka stołowa</option>
+                      <option value="tsp">Łyżeczka</option>
+                    </select>
+                  </div>
+                  <div style="display: flex; flex-direction: column; justify-content: flex-end;">
+                    <button id="btnConvert" class="btn-submit"
+                      style="padding: 0.85rem; font-size: 1.1rem; margin-top: 0;">Przelicz</button>
+                  </div>
+                </div>
+
+                <!-- Wynik przeliczenia -->
+                <div id="converterResult" class="converter-result-box">
+                  1 szklanka Mąki = 150 gramów (g)
+                </div>
+              </div>
+
+              <!-- MODUŁ: CO MASZ W LODÓWCE? -->
+              <div class="section-box" style="margin-top: 2rem;">
+                <h3>🧺 Co masz w lodówce?</h3>
+                <p style="margin-bottom: 1.25rem; font-size: 0.95rem; color: var(--text-muted);">
+                  Wpisz posiadane składniki rozdzielone przecinkami (np. jajka, ser, chleb), a Twój Wnuczek ułoży dla
+                  Ciebie zdrowy przepis!
+                </p>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                  <label for="fridgeIngredientsInput" style="font-size: 1rem;">Składniki w lodówce</label>
+                  <input type="text" id="fridgeIngredientsInput"
+                    placeholder="np. jajka, twaróg, chleb, szpinak, pomidor">
+                </div>
+                <button id="btnGenerateFridgeRecipe" class="btn-submit"
+                  style="margin-top: 0.5rem; padding: 0.85rem; font-size: 1.1rem;">
+                  🍳 Stwórz danie ze składników
+                </button>
+
+                <!-- Wynik przepisu z lodówki -->
+                <div id="fridgeRecipeResult" class="hidden"
+                  style="margin-top: 1.5rem; padding: 1.5rem; border-radius: var(--radius-md); background-color: var(--bg-secondary); border: 2px dashed var(--primary); animation: fadeIn 0.4s ease; position: relative;">
+                  <div id="fridgeRecipeLoading" class="card-loading hidden"
+                    style="border-radius: var(--radius-md); background-color: rgba(255,255,255,0.85);">
+                    <div class="spinner" style="width: 40px; height: 40px; border-width: 4px;"></div>
+                    <p style="font-weight: 800; color: var(--primary); font-size: 1rem; margin-top: 0.5rem;">Wnuczek
+                      obmyśla przepis...</p>
+                  </div>
+                  <h4 id="fridgeRecipeTitle"
+                    style="color: var(--primary); margin-bottom: 0.75rem; font-size: 1.25rem; font-family: 'Outfit', sans-serif;">
+                  </h4>
+                  <p id="fridgeRecipeText"
+                    style="font-size: 1.05rem; line-height: 1.6; color: var(--text-main); white-space: pre-line;"></p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Prawa kolumna: Spersonalizowana Dieta, Jadłospis i Porady -->
+            <div>
+              <!-- Wybór dolegliwości -->
+              <div class="section-box" style="margin-bottom: 2rem;">
+                <h3>🥗 Spersonalizowana Dieta</h3>
+                <p style="margin-bottom: 1.25rem; font-size: 0.95rem; color: var(--text-muted);">
+                  Wybierz swoje dolegliwości lub preferencje, aby dopasować przykładowy jadłospis dobowy i zalecenia.
+                </p>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label for="dietConditionSelect" style="font-size: 1rem;">Twoja dieta / dolegliwości:</label>
+                  <select id="dietConditionSelect">
+                    <option value="general">Ogólna dieta seniora (Zdrowy senior)</option>
+                    <option value="diabetes">Cukrzyca (Niski indeks glikemiczny)</option>
+                    <option value="hypertension">Nadciśnienie (Dieta niskosodowa)</option>
+                    <option value="digestive">Łatwostrawna (Problemy trawienne)</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Menu Dobowe -->
+              <div class="section-box" style="margin-bottom: 2rem;">
+                <h3>🍽️ Przykładowy Jadłospis Dobowy</h3>
+                <div id="dietPlanContainer" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
+                  <!-- Wypełniane dynamicznie przez diet.js -->
+                </div>
+              </div>
+
+              <!-- Dzienne zapotrzebowanie kaloryczne -->
+              <div class="section-box" style="margin-bottom: 2rem;">
+                <h3>⚖️ Zapotrzebowanie Kaloryczne</h3>
+                <p style="font-size: 1.05rem; margin-bottom: 1rem;" id="dietCalorieTarget">Obliczanie Twoich potrzeb
+                  kalorycznych...</p>
+                <div style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.5;">
+                  Dla seniorów kluczowe jest nie tylko dostarczanie energii, ale przede wszystkim odpowiednia gęstość
+                  odżywcza: mniej cukrów prostych, więcej białka (dla mięśni) oraz odpowiednie nawodnienie (minimum 1.5
+                  - 2 litry płynów dziennie).
+                </div>
+              </div>
+
+              <!-- Porady ogólne -->
+              <div class="section-box" style="gap: 1.25rem;">
+                <h3>👵 Złote Zasady Żywienia dla Seniora</h3>
+                <div style="display: flex; flex-direction: column; gap: 1rem; font-size: 1.05rem;">
+                  <p><strong>1. Często, ale mało:</strong> Spożywaj 4-5 mniejszych posiłków w odstępach co 3-4 godziny.
+                  </p>
+                  <p><strong>2. Pamiętaj o wodzie:</strong> Pij wodę regularnie, małymi łykami, nawet gdy nie czujesz
+                    pragnienia.</p>
+                  <p><strong>3. Ogranicz sól:</strong> Sól podnosi ciśnienie. Używaj świeżych ziół (majeranek, lubczyk,
+                    koperek, natka pietruszki).</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- WIDOK: SOS I ALARMY -->
+        <section id="viewSettings" class="view-card hidden">
+          <h2 class="view-title">🚨 Panel SOS i Alarmy</h2>
+          <p class="view-subtitle">Uzyskaj natychmiastową pomoc ratunkową, sprawdź kontakt alarmowy lub przetestuj
+            powiadomienia</p>
+
+          <!-- SEKCJA SOS -->
+          <div class="section-box" style="margin-bottom: 2.5rem; text-align: center;">
+            <h3 style="justify-content: center; color: var(--danger);">🆘 Szybka Pomoc (SOS)</h3>
+            <p style="margin-bottom: 2rem; font-size: 1.15rem; color: var(--text-muted);">
+              W nagłej sytuacji naciśnij poniższy przycisk, aby pokazać numery telefonów do Twoich bliskich oraz na
+              pogotowie.
+            </p>
+            <button id="btnSosAlert" class="btn-submit"
+              style="background: linear-gradient(135deg, var(--danger), #991b1b); font-size: 2.2rem; padding: 1.5rem 3rem; border-radius: var(--radius-lg); box-shadow: 0 8px 24px rgba(220, 38, 38, 0.4); animation: redPulse 1.5s infinite; border: 3px solid var(--danger-light); width: auto; display: inline-flex; margin: 0 auto;">
+              🆘 SOS
+            </button>
+
+            <!-- Rozwijane szczegóły SOS -->
+            <div id="sosDetailsBox" class="hidden"
+              style="margin-top: 2.5rem; padding: 2rem; border-radius: var(--radius-md); background-color: var(--danger-light); border: 3px solid var(--danger); text-align: left; animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);">
+              <h4
+                style="color: var(--danger); font-size: 1.6rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.6rem; font-family: 'Outfit', sans-serif;">
+                🚨 DANE KONTAKTOWE SOS</h4>
+
+              <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+                <div
+                  style="background-color: var(--bg-secondary); padding: 1.25rem; border-radius: var(--radius-md); border: 2px solid var(--border-color);">
+                  <p
+                    style="font-size: 1rem; color: var(--text-muted); font-weight: 800; margin-bottom: 0.25rem; text-transform: uppercase;">
+                    Osoba bliska (Kontakt alarmowy):</p>
+                  <p style="font-size: 1.35rem; font-weight: 800; color: var(--text-main);" id="sosEmergencyName">Janina
+                    Kowalska</p>
+                  <p style="font-size: 1.6rem; font-weight: 850; margin-top: 0.5rem;">
+                    <a href="tel:" id="sosEmergencyPhone"
+                      style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">📞
+                      +48 123 456 789</a>
+                  </p>
+                </div>
+
+                <div
+                  style="background-color: #fee2e2; padding: 1.25rem; border-radius: var(--radius-md); border: 2px solid var(--danger);">
+                  <p
+                    style="font-size: 1rem; color: #991b1b; font-weight: 800; margin-bottom: 0.25rem; text-transform: uppercase;">
+                    Numer alarmowy (Pogotowie/Policja/Straż):</p>
+                  <p style="font-size: 2rem; font-weight: 900; margin-top: 0.25rem;">
+                    <a href="tel:112"
+                      style="color: var(--danger); text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; animation: pulse 1s infinite alternate;">🚨
+                      Zadzwoń pod 112</a>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SEKCJA TESTOWANIA -->
+          <div class="section-box">
+            <h3>🧪 Panel Kontrolny Alarmu i Danych</h3>
+            <p style="margin-bottom: 1.5rem; font-size: 1.05rem; color: var(--text-muted);">
+              Użyj poniższych przycisków, aby przetestować sprawność działania powiadomień głosowych lub zresetować
+              wszystkie zapisane dane.
+            </p>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.75rem;">
+              <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <button id="btnTriggerDemoAlert" class="btn-submit"
+                  style="margin-top: 0; padding: 1rem; background: linear-gradient(135deg, var(--accent), var(--accent-hover)); box-shadow: 0 4px 10px rgba(234, 88, 12, 0.25);">
+                  🚨 Przetestuj alarm medyczny (natychmiast)
+                </button>
+                <small class="form-help">Wyzwala natychmiastowo okno przypomnienia o leku z lektorem głosowym w celu
+                  weryfikacji.</small>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <button id="btnClearAllData" class="btn-logout"
+                  style="width: 100%; min-height: 48px; font-weight: 800; padding: 1rem;">
+                  🗑️ Usuń wszystkie dane aplikacji (Reset)
+                </button>
+                <small class="form-help" style="color: var(--danger);">UWAGA: Czysty reset wyczyści Twoje leki,
+                  kalendarz, klucz API oraz wyloguje z aplikacji.</small>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- WIDOK: TRENING PAMIĘCI -->
+        <section id="viewGames" class="view-card hidden">
+          <h2 class="view-title">🧠 Trening Pamięci i Umysłu</h2>
+          <p class="view-subtitle">Wytężaj umysł codziennie razem z Wnuczkiem!</p>
+
+          <div class="section-box" style="margin-bottom: 2rem; text-align: center; padding: 3rem;">
+            <button id="btnStartGame" class="btn-submit"
+              style="font-size: 1.4rem; padding: 1.25rem 2.5rem; border-radius: var(--radius-md); width: auto; margin: 0 auto 1.5rem auto;">
+              Rozpocznij nową grę z Wnuczkiem
+            </button>
+            <p style="font-size: 1.05rem; color: var(--text-muted); line-height: 1.5;">
+              Po kliknięciu przycisku Wnuczek Adaś przygotuje dla Ciebie spersonalizowane zadanie logiczne, kalambur lub
+              pytanie historyczne.
+            </p>
+          </div>
+
+          <!-- Loader -->
+          <div id="gameLoading" class="hidden" style="text-align: center; padding: 2rem; animation: fadeIn 0.3s ease;">
+            <div class="spinner" style="margin: 0 auto 1rem auto; width: 50px; height: 50px; border-width: 5px;"></div>
+            <p style="font-weight: 800; color: var(--primary); font-size: 1.15rem;">Wnuczek obmyśla zagadkę dla
+              Ciebie...</p>
+          </div>
+
+          <!-- Kontener na zagadkę -->
+          <div id="gamePuzzleBox" class="hidden section-box"
+            style="margin-bottom: 2rem; animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);">
+            <h3 style="color: var(--primary); font-size: 1.35rem; margin-bottom: 1rem;">Twoja Zagadka:</h3>
+            <p id="gamePuzzleText"
+              style="font-size: 1.15rem; line-height: 1.6; font-style: italic; color: var(--text-main); white-space: pre-line; background-color: var(--bg-secondary); padding: 1.75rem; border-radius: var(--radius-md); border-left: 6px solid var(--accent);">
+            </p>
+
+            <!-- Formularz odpowiedzi -->
+            <div id="gameAnswerForm" class="form-group" style="margin-top: 2rem; margin-bottom: 0;">
+              <label for="gameAnswerInput" style="font-size: 1.1rem; font-weight: 800;">Wpisz swoją odpowiedź
+                tutaj:</label>
+              <textarea id="gameAnswerInput" rows="3"
+                placeholder="np. Napoleon Bonaparte / Dwa kilogramy / Trzecia litera to..."
+                style="font-size: 1.1rem; padding: 1rem;"></textarea>
+              <button id="btnSubmitAnswer" class="btn-submit"
+                style="margin-top: 1.25rem; font-size: 1.2rem; padding: 1rem;">
+                Sprawdź moją odpowiedź
+              </button>
+            </div>
+          </div>
+
+          <!-- Loader sprawdzania -->
+          <div id="gameCheckingLoading" class="hidden" style="text-align: center; padding: 2rem;">
+            <div class="spinner" style="margin: 0 auto 1rem auto; width: 40px; height: 40px; border-width: 4px;"></div>
+            <p style="font-weight: 800; color: var(--primary); font-size: 1.1rem;">Wnuczek sprawdza odpowiedź...</p>
+          </div>
+
+          <!-- Sekcja feedbacku AI -->
+          <div id="gameFeedbackBox" class="hidden section-box"
+            style="animation: fadeIn 0.4s ease; border: 3px solid var(--success);">
+            <h3 id="gameFeedbackHeader"
+              style="color: var(--success); font-size: 1.5rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+              ✨ Twoja Ocena
+            </h3>
+
+            <div style="display: flex; gap: 1.5rem; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap;">
+              <div id="gameScorePercent"
+                style="font-size: 3rem; font-weight: 900; color: var(--success); font-family: 'Outfit', sans-serif;">
+                100%
+              </div>
+              <p id="gameFeedbackStatus"
+                style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin: 0;"></p>
+            </div>
+
+            <p id="gameFeedbackText"
+              style="font-size: 1.1rem; line-height: 1.6; color: var(--text-main); white-space: pre-line; background-color: var(--bg-secondary); padding: 1.5rem; border-radius: var(--radius-md);">
+            </p>
+          </div>
+        </section>
+
+        <!-- WIDOK: NIEZBĘDNIK SENIORA (LINKI) -->
+        <section id="viewLinks" class="view-card hidden">
+          <h2 class="view-title">🔗 Przydatne Strony i Portale</h2>
+          <p class="view-subtitle">Wszystko, czego potrzebujesz w jednym miejscu - bez przeszukiwania całego internetu!
+          </p>
+
+          <div class="links-grid">
+            <a href="https://pacjent.gov.pl" target="_blank" class="link-tile">
+              <span class="link-tile-icon">🏥</span>
+              <div class="link-tile-content">
+                <strong class="link-tile-title">Internetowe Konto Pacjenta</strong>
+                <p class="link-tile-desc">Twoje recepty, skierowania i historia leczenia (pacjent.gov.pl)</p>
+              </div>
+            </a>
+
+            <a href="https://www.gdziepolek.pl" target="_blank" class="link-tile">
+              <span class="link-tile-icon">💊</span>
+              <div class="link-tile-content">
+                <strong class="link-tile-title">GdziePoLek - Znajdź swój lek</strong>
+                <p class="link-tile-desc">Sprawdź dostępność i zarezerwuj leki w najbliższej aptece</p>
+              </div>
+            </a>
+
+            <a href="https://www.zus.pl/portal" target="_blank" class="link-tile">
+              <span class="link-tile-icon">🏛️</span>
+              <div class="link-tile-content">
+                <strong class="link-tile-title">Portal ZUS Elektroniczny (PUE)</strong>
+                <p class="link-tile-desc">Sprawy emerytalne, rentowe i składki ubezpieczeniowe online</p>
+              </div>
+            </a>
+
+            <a href="https://www.gov.pl/web/mobywatel" target="_blank" class="link-tile">
+              <span class="link-tile-icon">🪪</span>
+              <div class="link-tile-content">
+                <strong class="link-tile-title">mObywatel Portal</strong>
+                <p class="link-tile-desc">Dowód osobisty, prawo jazdy i legitymacje w formie cyfrowej</p>
+              </div>
+            </a>
+
+            <a href="https://www.senior.pl" target="_blank" class="link-tile">
+              <span class="link-tile-icon">📰</span>
+              <div class="link-tile-content">
+                <strong class="link-tile-title">Senior.pl - Wiadomości i Porady</strong>
+                <p class="link-tile-desc">Aktualne wiadomości, porady prawne, zdrowotne i finanse dla osób starszych</p>
+              </div>
+            </a>
+
+            <a href="https://www.znanylekarz.pl" target="_blank" class="link-tile">
+              <span class="link-tile-icon">🩺</span>
+              <div class="link-tile-content">
+                <strong class="link-tile-title">ZnanyLekarz - Umów Wizytę</strong>
+                <p class="link-tile-desc">Znajdź lekarza specjalistę i umów się na wizytę przez internet</p>
+              </div>
+            </a>
+          </div>
+        </section>
+
+      </main>
+
+    </div>
+
+  </div>
+
+  <!-- SKRYPTY APLIKACJI -->
+  <script src="config.js"></script>
+  <script src="alerts.js"></script>
+  <script src="diet.js"></script>
+  <script src="cards.js"></script>
+  <script src="chat.js"></script>
+  <script src="assets/games.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>
