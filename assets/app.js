@@ -65,8 +65,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Inicializacja Ustawień Lokalnych (A11y i Motyw)
   initA11ySettings();
 
-  // Sprawdzenie sesji w localStorage
-  checkSession();
+  // Sprawdzenie sesji w localStorage (Nacisk na logged_in_senior)
+  initSeniorSession();
 
   // ==========================================================================
   // NAWIGACJA SPA & TABY AUTORYZACJI
@@ -166,24 +166,29 @@ document.addEventListener("DOMContentLoaded", () => {
     users.push(newUser);
     localStorage.setItem("wnuczek_users", JSON.stringify(users));
     
-    showToast("Konto zostało pomyślnie utworzone! Zaloguj się teraz.", "success");
-    
-    // Przełącz na logowanie i uzupełnij e-mail
-    tabLogin.click();
-    document.getElementById("loginEmail").value = email;
-    document.getElementById("loginPassword").value = "";
+    showToast("Konto zostało pomyślnie utworzone! Zalogowano automatycznie.", "success");
+    loginUser(newUser);
   });
 
-  // Obsługa wylogowania
+  // Obsługa wylogowania (nagłówek)
   btnLogout.addEventListener("click", () => {
     logoutUser();
     showToast("Pomyślnie wylogowano z aplikacji.", "info");
   });
 
+  // Obsługa wylogowania (profil)
+  const btnProfileLogout = document.getElementById("btnProfileLogout");
+  if (btnProfileLogout) {
+    btnProfileLogout.addEventListener("click", () => {
+      logoutUser();
+      showToast("Pomyślnie wylogowano z aplikacji.", "info");
+    });
+  }
+
   // Funkcja logowania użytkownika
   function loginUser(user) {
     currentUser = user;
-    localStorage.setItem("wnuczek_currentUser", JSON.stringify(user));
+    localStorage.setItem("logged_in_senior", JSON.stringify(user));
     
     // Zmień widoczność ekranów
     authScreen.classList.add("hidden");
@@ -213,7 +218,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Funkcja wylogowania
   function logoutUser() {
     currentUser = null;
-    localStorage.removeItem("wnuczek_currentUser");
+    localStorage.removeItem("logged_in_senior");
     
     authScreen.classList.remove("hidden");
     appContainer.classList.add("hidden");
@@ -222,9 +227,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (typeof window.stopAlertCheckTimer === "function") window.stopAlertCheckTimer();
   }
 
-  // Sprawdzanie czy użytkownik jest zalogowany
-  function checkSession() {
-    const sessionUser = JSON.parse(localStorage.getItem("wnuczek_currentUser"));
+  // Funkcja inicjalizacyjna do sprawdzenia sesji w localStorage (logged_in_senior)
+  function initSeniorSession() {
+    const sessionUser = JSON.parse(localStorage.getItem("logged_in_senior"));
     if (sessionUser) {
       loginUser(sessionUser);
     } else {
