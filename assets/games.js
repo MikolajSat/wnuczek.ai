@@ -109,7 +109,7 @@
   async function generateAIPuzzle(apiKey) {
     // 1. Pobiera rok urodzenia seniora z user_profile (jeśli jest dostępny)
     let birthYear = 1950;
-    const profile = currentUser || JSON.parse(localStorage.getItem("wnuczek_currentUser"));
+    const profile = currentUser || JSON.parse(localStorage.getItem("logged_in_senior"));
     if (profile && profile.age) {
       birthYear = new Date().getFullYear() - profile.age;
     }
